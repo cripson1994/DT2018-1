@@ -3,26 +3,57 @@
 
 -- 1. Докажите дистрибутивность умножения над сложением для натуральных чисел.
 
-\func ldistr (n m k : Nat) : n * (m + k) = n * m + n * k => {?}
+\func ldistr (n m k : Nat) : n * (m + k) = n * m + n * k \elim k
+    | 0 => idp
+    | suc k => pmap (\lam x => x + n) (ldistr n m k)
+               *> (+-assoc (n * m) (n * k) n)
 
-\func rdistr (n m k : Nat) : (m + k) * n = m * n + k * n => {?}
+
+\func rdistr (n m k : Nat) : (m + k) * n = m * n + k * n \elim n
+    | 0 => idp
+    | suc n => pmap (\lam x => x + (m + k)) (rdistr n m k)
+               -- ((m + k) * n + (m + k)) = (m * n + k * n + (m + k))
+               *> +-assoc (m * n) (k * n) (m + k)
+               -- ((m + k) * n + (m + k)) = (m * n + k * n + (m + k))
+               *> pmap (\lam x => m * n + x) (sym (+-assoc (k * n) m k))
+               -- (m * n + k * n + (m + k)) = (m * n + (k * n + m + k))
+               *> pmap (\lam x => m * n + (x + k)) (+-comm (k * n) m)
+               -- (m * n + (k * n + m + k)) = (m * n + (m + k * n + k))
+               *> pmap (\lam x => (m * n) + x) (+-assoc m (k * n) k)
+               -- (m * n + (m + k * n + k)) = (m * n + (m + (k * n + k)))
+               *> sym (+-assoc (m * n) m (k * n + k))
 
 -- 2. Докажите, что reverse (reverse xs) = xs, где reverse определен через ++.
 
 \data List (A : \Type) | nil | cons A (List A)
 
 \func \infixl 4 ++ {A : \Type} (xs ys : List A) : List A \elim xs
-  | nil => ys
-  | cons x xs => cons x (xs ++ ys)
+    | nil => ys
+    | cons x xs => cons x (xs ++ ys)
 
 \func reverse {A : \Type} (xs : List A) : List A
-  | nil => nil
-  | cons x xs => reverse xs ++ cons x nil
+    | nil => nil
+    | cons x xs => reverse xs ++ cons x nil
 
 -- Это утверждение будет полезно для доказательства.
-\func reverse++ {A : \Type} (xs ys : List A) : reverse (xs ++ ys) = reverse ys ++ reverse xs => {?}
 
-\func reverse-isInvolutive {A : \Type} (xs : List A) : reverse (reverse xs) = xs => {?}
+\func ++nil-neutral {A : \Type} (xs : List A) :  xs = xs ++ nil  \elim xs
+    | nil => idp
+    | cons x xs => pmap (cons x) (++nil-neutral xs)
+
+\func ++-assoc {A : \Type} (xs ys zs : List A) : (xs ++ ys) ++ zs = xs ++ (ys ++ zs) \elim xs
+    | nil => idp
+    | cons x xs => pmap (cons x) (++-assoc xs ys zs)
+
+\func reverse++ {A : \Type} (xs ys : List A) : reverse (xs ++ ys) = reverse ys ++ reverse xs \elim xs
+    | nil => ++nil-neutral (reverse ys)
+    | cons x xs => pmap (\lam zs => zs ++ cons x nil) (reverse++ xs ys)
+                   *> ++-assoc (reverse ys) (reverse xs) (cons x nil)
+
+\func reverse-isInvolutive {A : \Type} (xs : List A) : reverse (reverse xs) = xs \elim xs
+    | nil => idp
+    | cons x xs => reverse++ (reverse xs) (cons x nil)
+                   *> pmap (\lam zs => cons x zs) (reverse-isInvolutive xs)
 
 -- 3. Докажите, что vnil является нейтральным элементом для v++.
 
@@ -30,7 +61,12 @@
 
 -- 4. Докажите, что 0 не равно suc x.
 
-\func zero/=suc (x : Nat) (p : 0 = suc x) : Empty => {?}
+\data MoreThen0Nat (n : Nat) \with
+    | suc n => n0
+
+\func absurd (t : MoreThen0Nat 0) : Empty
+
+\func zero/=suc (x : Nat) (p : 0 = suc x) : Empty => absurd (transport MoreThen0Nat (sym p) n0)
 
 -- 5. Докажите, что fac не равен suc.
 
@@ -38,7 +74,14 @@
   | 0 => 1
   | suc n => suc n * fac n
 
-\func fac/=suc (p : fac = suc) : Empty => {?}
+\data MoreThen1Nat (n : Nat) \with
+    | suc (suc n) => n1
+
+\func absurd' (t : MoreThen1Nat 1) : Empty
+
+\func one/=two (x : Nat) (p : 1 = suc (suc x)) : Empty => absurd' (transport MoreThen1Nat (sym p) n1)
+
+\func fac/=suc (p : fac = suc) : Empty => one/=two 0 (pmap (\lam f => f 1) p)
 
 -- 6. У оператора J есть другая форма, которую мы будем называть Jalt. Докажите, что J и Jalt эквивалентны, то есть выразите одно через другое и наоборот.
 
@@ -46,7 +89,7 @@
 
 \func Jalt {A : \Type} (B : \Pi (a a' : A) -> a = a' -> \Type)
     (b : \Pi (a : A) -> B a a idp)
-    {a a' : A} (p : a = a') : B a a' p => {?}
+    {a a' : A} (p : a = a') : B a a' p => J (B a) (b a) p
 
 -- Выразите J через Jalt. Можно пользоваться только Jalt, idp и всем, что через них выражается.
 
