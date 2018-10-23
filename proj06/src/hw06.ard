@@ -2,26 +2,78 @@
 
 -- 1. Определите функцию swap при помощи \cowith, swap' при помощи паттерн матчинг и swap'' при помощи \new.
 
-\func swap {A B : \Type} (p : Pair A B) : Pair B A => {?}
+\func swap {A B : \Type} (p : Pair A B) : Pair B A \cowith
+    | fst_ => p.snd_
+    | snd_ => p.fst_
 
-\func swap' {A B : \Type} (p : Pair A B) : Pair B A => {?}
+\func swap' {A B : \Type} (p : Pair A B) : Pair B A \elim p
+    | (A, B, a, b) => \new Pair { | fst_ => b | snd_ => a }
 
-\func swap'' {A B : \Type} (p : Pair A B) : Pair B A => {?}
+\func swap'' {A B : \Type} (p : Pair A B) : Pair B A => \new Pair { | fst_ => p.snd_ | snd_ => p.fst_ }
 
 -- 2. Докажите, что swap (swap p) = p.
 
-\func swap-involutive {A B : \Type} (p : Pair A B) : swap (swap p) = p => {?}
+\func swap-involutive {A B : \Type} (p : Pair A B) : swap (swap p) = p => idp
 
 -- 3. Докажите, что тип PosNat 0 пустой, а тип PosNat 1 нет.
 
 \data Empty
 
-\func zero-isNotPos (p : PosNat 0) : Empty => {?}
+\func absurd (p : T false) : Empty
 
-\func one-isPos : PosNat 1 => {?}
+\func zero-isNotPos (p : PosNat 0) : Empty => absurd p.p
+
+\func one-isPos : PosNat 1 => \new PosNat {| n => 1 | p => tt}
 
 -- 4. Определите \record, состоящий из пар взаимно простых натуральных чисел.
 --    Определите тип, состоящий из натуральных чисел, взаимно простых с 60.
+
+\instance EqNat : Eq Nat {
+  | == => equals
+}
+
+\func equals (x y : Nat) : Bool
+  | suc x, suc y => x `equals` y
+  | 0,     0     => true
+  | _,     _     => false
+
+\func \infixl 6 - (x y : Nat) : Nat
+  | 0, _ => 0
+  | suc x, 0 => suc x
+  | suc x, suc y => x - y
+
+\func \infix 4 < (x y : Nat) : Bool
+  | 0, 0 => false
+  | 0, suc y => true
+  | suc x, 0 => false
+  | suc x, suc y => x < y
+
+\func if {A : \Type} (x : Bool) (t e : A) : A \elim x
+    | true => t
+    | false => e
+
+\func mod (x y : Nat) : Nat => mod' x x y
+  \where
+    \func mod' (s x y : Nat) : Nat \elim s
+        | 0 => x
+        | suc s => if (x < y) x (mod' s (x - y) y)
+
+
+\func gcd (x y : Nat) : Nat => if (y < x) (gcd' x x y) (gcd' y y x)
+  \where
+    \func gcd' (s x y : Nat) : Nat \elim s
+        | 0 => x
+        | suc s => \case y \with {
+            | 0 => x
+            | y => gcd' s y (mod x y)
+        }
+
+\func prime (x y : Nat) : Bool => gcd x y == 1
+
+\record PrimePair (x y : Nat) (p : T (prime x y))
+
+\record PrimeWith60 \extends PrimePair
+    | x => 60
 
 -- 5. Определите класс монад, который наследует класс функторов. Определите \instance этого класса для Maybe.
 
