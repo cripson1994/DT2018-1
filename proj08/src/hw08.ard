@@ -1,0 +1,102 @@
+\import lect08
+
+-- 1. Укажите явно чему равен уровень в каждом из вызовов id' ниже.
+--    Напишите явно чему равны типы всех функций idTest*.
+
+\func id' {A : \Type} (a : A) => a
+
+\func idTest1 : \Pi (A : \Type \lp ) -> A -> A => id' (\suc \lp) (id' (\suc \lp) id)
+\func idTest2 : \Type \lp -> \Type \lp => id' (\suc \lp) Maybe
+\func idTest3 : \Type (\suc \lp) => id' (\suc (\suc \lp)) Functor
+\func idTest4 : \Type (\suc \lp) => id' (\suc (\suc \lp)) (Functor \lp Maybe)
+\func idTest5 (f : \Pi {A B : \Type} -> (A -> B) -> Maybe A -> Maybe B) : \Type \lp => id' (\suc \lp) (Functor Maybe f)
+
+-- 2. Определите предикат принадлежности элемента списку.
+
+\data List (A : \Type) | nil | cons A (List A)
+
+\data In {A : \Type} (a : A) (xs : List A) \elim xs
+    | cons x xs => in (x = a)
+    | cons x xs => maybe (In a xs)
+    
+-- 3. Докажите эквивалентность пяти различных определений LessOrEq: lessOrEq, LessOrEq, LessOrEq', LessOrEq'' и LessOrEq'''.
+
+\func idp {A : \Type} {a : A} => path (\lam _ => a)
+
+\func proof_1->2 {n m : Nat} (p : lessOrEq n m) : LessOrEq n m \elim n, m
+  | 0, m => z<=n
+  | suc n, suc m => s<=s (proof_1->2 p)
+
+\func proof_2->3 {n m : Nat} (p : LessOrEq n m) : LessOrEq' n m \elim n, m
+  | 0, m => z<=n' idp
+  | suc n, suc m => \case p \with {
+    |  s<=s p => s<=s' idp idp (proof_2->3 p)
+  }
+
+\func proof_3->4 {n m : Nat} (p : LessOrEq' n m) : LessOrEq'' n m  => {?}
+
+\func pmap {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') => path (\lam i => f (p @ i))
+
+\func transport {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a)
+  => coe (\lam i => B (p @ i)) b right
+
+\func \infixr 5 *> {A : \Type} {a a' a'' : A} (p : a = a') (q : a' = a'') : a = a''
+  => transport (\lam x => a = x) q p
+
+\func lemma0+n=n {n : Nat} : 0 Nat.+ n = n \elim n
+    | 0 => idp
+    | suc n => pmap suc lemma0+n=n
+
+\func lemma_suc-assoc {n m : Nat} :  suc n Nat.+ m = suc (n Nat.+ m) \elim m
+    | 0 => idp
+    | suc m => pmap suc lemma_suc-assoc
+
+\func proof_4->5 {n m : Nat} (p : LessOrEq'' n m) : LessOrEq''' n m \elim n, m, p
+    | 0, 0, <=-refl p => (0, helper p)
+    | n, suc m, <=-refl p => (0, helper p)
+    | suc n, m, <=-refl p => (0, helper p)
+    | 0, suc m, <=-step p => (suc m, idp)
+    | suc n, suc m, <=-step p => \case proof_4->5 p \with {
+        | (k, p) => (suc k, pmap suc (lemma_suc-assoc *> p))
+    }
+    \where
+        \func helper {n m : Nat} (p : n = m) : 0 Nat.+ n = m => lemma0+n=n *> p
+
+\func suc/=0 {n : Nat} (p : suc n = 0) : Empty => transport (\lam n => \case n \with { | 0 => Empty | suc _ => Unit }) p unit
+
+\func pred (n : Nat) : Nat
+  | 0 => 0
+  | suc n => n
+
+\func proof_5->1 {n m : Nat} (p : LessOrEq''' n m) : lessOrEq n m \elim n, m, p
+    | 0, _, _ => unit
+    | suc n, 0, (_, p) => suc/=0 p
+    | suc n, suc m, (k, p) => proof_5->1 (k, pmap pred p)
+
+
+-- 4. Определите рефлексивное транзитивное замыкание отношения.
+--    То есть ReflTransClosure R -- это минимальное рефлексивное и транзитивное отношение, содержащее R.
+
+--\data ReflTransClosure {A : \Type} (R : A -> A -> \Type) (x y : A)
+
+\data ReflTransClosure {A : \Type} (R : A -> A -> \Type) (x y : A)
+  | reflect {x y : A} (x = y)
+  | trans {x y z : A} (ReflTransClosure R x z) (ReflTransClosure R z y)
+  | closure {x y : A} (R x y)
+
+-- 5. Докажите, что если R уже рекфлексивно и транзитивно, то ReflTransClosure R эквивалентно R.
+
+\func \infix 4 <-> {A : \Type} (P Q : A -> A -> \Type) => \Pi (x y : A) -> \Sigma (P x y -> Q x y) (Q x y -> P x y)
+
+\func ReflTransClosure-lem {A : \Type} (R : A -> A -> \Type) (refl : \Pi (x : A) -> R x x) (trans : \Pi (x y z : A) -> R x y -> R y z -> R x z) : R <-> ReflTransClosure R => {?}
+
+-- 6. Определите предикат xs <= ys на списках, означающий "список xs является подсписком ys".
+
+\data \infix 5 <= {A : \Type} (xs ys : List A) : \Type \elim xs, ys
+    | nil, _ => head-nil
+    | cons x xs, cons y ys => {
+        | head-in (x = y) (xs <= ys)
+        | head-out ((cons x xs) <= ys)
+    }
+
+-- 7. Докажите, что filter xs <= xs для любого списка xs.
