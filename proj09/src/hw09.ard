@@ -1,0 +1,48 @@
+\import lect09
+\open Nat
+
+-- 1. Определите факториал через Nat-rec.
+
+\func fact (n : Nat) => Nat-rec 1 (\lam a b => (a + 1) * b) n
+
+-- 2. Докажите ассоциативность сложения для натуральных чисел через Nat-elim.
+
+\func pmap {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') => path (\lam i => f (p @ i))
+
+\func +-assoc (n m k : Nat) : (n + m) + k = n + (m + k)
+    => Nat-elim (\lam k => n + m + k = n + (m + k)) idp (\lam _ x => pmap suc x) k
+
+-- 3. Определите через Nat-<-ind либо div, либо toDivDom.
+
+\func div (n k : Nat) : Nat => {?}
+
+\func toDivDom {n k : Nat} (t : T (0 < k)) : divDom
+
+-- 4. Определите элиминатор для D.
+
+\func D-elim (E : D -> \Type)
+    (c1 : \Pi (x : Nat) -> E (con1 x))
+    (c2 : \Pi (d1 : D) -> E d1 -> \Pi (d2 : D) -> E d2 -> E (con2 d1 d2))
+    (c3 : \Pi (f : Nat -> D) -> (\Pi (x : Nat) -> E (f x)) -> E (con3 f))
+    (d : D) : E d \elim d
+        | con1 x => c1 x
+        | con2 d1 d2 => c2 d1 (D-elim E c1 c2 c3 d1) d2 (D-elim E c1 c2 c3 d2)
+        | con3 f => c3 f (\lam n => D-elim E c1 c2 c3 (f n))
+
+-- 5. Определите рекурсор и элиминатор для List.
+
+\func List-rec {A E : \Type} (n : E) (c : (List A) -> A -> E -> E) (xs : List A) : E \elim xs
+    | nil => n
+    | cons x xs => c (cons x xs) x (List-rec n c xs)
+
+\func List-elim {E : \Type} (B : List E -> \Type) (n : B nil)
+    (c : \Pi (x : E) -> \Pi (xs : List E) -> B xs -> B (cons x xs))
+    (xs : List E) : B xs \elim xs
+    | nil => n
+    | cons x xs => c x xs (List-elim B n c xs)
+
+
+-- 6. Докажите принцип индукции для натуральных чисел, позволяющий использовать индукционную гипотезу для любого меньшего числа.
+--    Hint: Прежде, чем доказывать утверждение по индукции, его можно обобщить.
+
+\func Nat-<-ind (P : Nat -> \Type) (h : \Pi (n : Nat) -> (\Pi (k : Nat) -> T (k < n) -> P k) -> P n) (n : Nat) : P n => {?}
