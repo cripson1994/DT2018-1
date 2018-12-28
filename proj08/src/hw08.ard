@@ -18,7 +18,7 @@
 \data In {A : \Type} (a : A) (xs : List A) \elim xs
     | cons x xs => in (x = a)
     | cons x xs => maybe (In a xs)
-    
+
 -- 3. Докажите эквивалентность пяти различных определений LessOrEq: lessOrEq, LessOrEq, LessOrEq', LessOrEq'' и LessOrEq'''.
 
 \func idp {A : \Type} {a : A} => path (\lam _ => a)
@@ -32,8 +32,6 @@
   | suc n, suc m => \case p \with {
     |  s<=s p => s<=s' idp idp (proof_2->3 p)
   }
-
-\func proof_3->4 {n m : Nat} (p : LessOrEq' n m) : LessOrEq'' n m  => {?}
 
 \func pmap {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') => path (\lam i => f (p @ i))
 
@@ -100,3 +98,29 @@
     }
 
 -- 7. Докажите, что filter xs <= xs для любого списка xs.
+
+\data Bool | true | false
+
+\func filter {A : \Type} (p : A -> Bool) (xs : List A) : List A \elim xs
+  | nil => nil
+  | cons x xs => \case p x \with {
+    | true => cons x (filter p xs)
+    | false => filter p xs
+  }
+
+\func lemma {A : \Type} (x : A) (ys xs : List A) (p : ys <= xs) : ys <= cons x xs \elim ys, xs
+    | nil, _ => head-nil
+    | cons y ys, cons a as => head-out p
+
+\func filter_xs<=xs {A : \Type} (p : A -> Bool) (xs : List A) : (filter p xs) <= xs \elim xs
+    | nil => head-nil
+    | cons x xs => helper p x xs
+    \where \func helper {A : \Type} (p : A -> Bool) (x : A) (xs : List A) : filter p (cons x xs) <= (cons x xs) =>
+        \let | ys => filter p xs | xsp => filter_xs<=xs p xs \in
+            \case p x \as b \return ( \case b \with {
+                | true => cons x (filter p xs)
+                | false => filter p xs
+                }) <= (cons x xs) \with {
+                    | true => head-in idp (filter_xs<=xs p xs)
+                    | false => lemma x (filter p xs) xs (filter_xs<=xs p xs)
+                }

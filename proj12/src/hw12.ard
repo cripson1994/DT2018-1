@@ -16,7 +16,16 @@
 
 \func \infix 1 <-> (A B : \Type) => \Sigma (A -> B) (B -> A)
 
-\func deMorgan (A B C : \Prop) : (\Sigma A (B `Or` C)) <-> ((\Sigma A B) `Or` (\Sigma A C)) => {?}
+\func deMorgan (A B C : \Prop) : (\Sigma A (B `Or` C)) <-> ((\Sigma A B) `Or` (\Sigma A C)) => (
+    \lam p => \case p \with {
+        | (a, inl b) => inl (a, b)
+        | (a, inr c) => inr (a, c)
+    },
+    \lam p => \case p \with {
+        | inl (a, b) => (a, inl b)
+        | inr (a, c) => (a, inr c)
+    }
+)
 
 -- 3. Определите элиминатор для Or через Or-rec, не используя паттерн матчинг на Or.
 
