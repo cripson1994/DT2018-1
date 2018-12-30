@@ -3,11 +3,11 @@
 -- 1. Определите функцию swap при помощи \cowith, swap' при помощи паттерн матчинг и swap'' при помощи \new.
 
 \func swap {A B : \Type} (p : Pair A B) : Pair B A \cowith
-    | fst_ => p.snd_
-    | snd_ => p.fst_
+  | fst_ => p.snd_
+  | snd_ => p.fst_
 
 \func swap' {A B : \Type} (p : Pair A B) : Pair B A \elim p
-    | (A, B, a, b) => \new Pair { | fst_ => b | snd_ => a }
+  | (A, B, a, b) => \new Pair { | fst_ => b | snd_ => a }
 
 \func swap'' {A B : \Type} (p : Pair A B) : Pair B A => \new Pair { | fst_ => p.snd_ | snd_ => p.fst_ }
 
@@ -49,34 +49,79 @@
   | suc x, suc y => x < y
 
 \func if {A : \Type} (x : Bool) (t e : A) : A \elim x
-    | true => t
-    | false => e
+  | true => t
+  | false => e
 
 \func mod (x y : Nat) : Nat => mod' x x y
   \where
     \func mod' (s x y : Nat) : Nat \elim s
-        | 0 => x
-        | suc s => if (x < y) x (mod' s (x - y) y)
-
+      | 0 => x
+      | suc s => if (x < y) x (mod' s (x - y) y)
 
 \func gcd (x y : Nat) : Nat => if (y < x) (gcd' x x y) (gcd' y y x)
   \where
     \func gcd' (s x y : Nat) : Nat \elim s
+      | 0 => x
+      | suc s => \case y \with {
         | 0 => x
-        | suc s => \case y \with {
-            | 0 => x
-            | y => gcd' s y (mod x y)
-        }
+        | y => gcd' s y (mod x y)
+      }
 
 \func prime (x y : Nat) : Bool => gcd x y == 1
 
 \record PrimePair (x y : Nat) (p : T (prime x y))
 
 \record PrimeWith60 \extends PrimePair
-    | x => 60
+  | x => 60
 
 -- 5. Определите класс монад, который наследует класс функторов. Определите \instance этого класса для Maybe.
 
+\class Monad \extends Functor
+  | \infixl 2 >>= {A B : \Type} (m : F A) (f : A -> F B) : F B
+  | return {A : \Type} (a : A) : F A
+  | id {A : \Type} (a : A) (f : A -> F A)  : (return a >>= f) = f a
+  | assoc {A B C : \Type} (m : F A) (f : A -> F B) (g : B -> F C) : (m >>= f) >>= g = m >>= (\lam x => f x >>= g)
+
 \data Maybe (A : \Type) | nothing | just A
 
--- 6. Задание отменено.
+\func maybe-fmap {A B : \Type} (f : A -> B) (m : Maybe A) : Maybe B \elim m
+  | just a => just (f a)
+  | _ => nothing
+
+\func maybe-fmap-idp {A : \Type} (m : Maybe A) : maybe-fmap (\lam (x : A) => x) m = m \elim m
+  | nothing => idp
+  | just a => idp
+
+\func maybe-fmap-comp {A B C : \Type} (f : A -> B) (g : B -> C) (y : Maybe A)
+  : maybe-fmap (\lam x => g (f x)) y = maybe-fmap g (maybe-fmap f y) \elim y
+  | nothing => idp
+  | just a => idp
+
+\func maybe-bind {A B : \Type} (m : Maybe A) (f : A -> Maybe B) : Maybe B \elim m
+  | nothing => nothing
+  | just a => f a
+
+\func maybe-id {A : \Type} (a : A) (f : A -> Maybe A) : (maybe-bind (just a) f) = f a => idp
+
+\func maybe-bind-assoc {A B C : \Type} (m : Maybe A) (f : A -> Maybe B) (g : B -> Maybe C)
+  : maybe-bind (maybe-bind m f) g = maybe-bind m (\lam x => maybe-bind (f x) g) \elim m
+  | nothing => idp
+  | just a => idp
+
+\instance MaybeMonad : Monad Maybe
+  | fmap => maybe-fmap
+  | fmap-id => maybe-fmap-idp
+  | fmap-comp => maybe-fmap-comp
+  | return => just
+  | >>= => maybe-bind
+  | id => maybe-id
+  | assoc => maybe-bind-assoc
+
+-- Это задание можно проигнорировать. Я его добавил на следующий год.
+-- 6. Определите инстансы монады для State и State'.
+
+\record State (S A : \Type)
+  | state : S -> \Sigma S A
+
+\data State' (S A : \Type)
+  | state' (S -> \Sigma S A)

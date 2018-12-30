@@ -5,44 +5,43 @@
 
 \func compare (x y : Nat) : Bool => x < y
 
-
 \func len {A : \Type} (xs : List A) : Nat \elim xs
-    | nil => 0
-    | cons x xs => suc (len xs)
+  | nil => 0
+  | cons x xs => suc (len xs)
 
 \func oneStep {A : \Type} (f : A -> A -> Bool) (xs : List A) : List A \elim xs
-    | nil => nil
-    | cons x nil => cons x nil
-    | cons x (cons y xs) => \case (f x y) \with {
-        | true => (cons x (oneStep f (cons y xs)))
-        | false => (cons y (oneStep f (cons x xs)))
-    }
+  | nil => nil
+  | cons x nil => cons x nil
+  | cons x (cons y xs) => \case (f x y) \with {
+    | true => (cons x (oneStep f (cons y xs)))
+    | false => (cons y (oneStep f (cons x xs)))
+  }
 
 \func sort {A : \Type} (f : A -> A -> Bool) (xs : List A) : List A \elim xs
-    | nil => nil
-    | cons x xs => helper f (cons x xs) (len xs)
-        \where
-            \func helper {A : \Type} (f : A -> A -> Bool) (xs : List A) (n : Nat) : List A \elim n
-                | 0 => xs
-                | suc n => helper f (oneStep f xs) n
+  | nil => nil
+  | cons x xs => helper f (cons x xs) (len xs)
+  \where
+    \func helper {A : \Type} (f : A -> A -> Bool) (xs : List A) (n : Nat) : List A \elim n
+      | 0 => xs
+      | suc n => helper f (oneStep f xs) n
 
 -- 2. Определите filter через if, а не через with.
 --    Докажите для этой версии filter лемму filter-lem.
 
 \func if {A : \Type} (x : Bool) (t e : A) : A \elim x
-    | true => t
-    | false => e
+  | true => t
+  | false => e
 
 \func filter' {A : \Type} (p : A -> Bool) (xs : List A) : List A \elim xs
-    | nil => nil
-    | cons x xs => if (p x) (cons x (filter' p xs)) (filter' p xs)
+  | nil => nil
+  | cons x xs => if (p x) (cons x (filter' p xs)) (filter' p xs)
 
 \func filter-lem {A : \Type} (p : A -> Bool) (xs : List A) : length (filter' p xs) <= length xs \elim xs
-    | nil => unit
-    | cons x xs => \case p x \as b \return length (if (b) (cons x (filter' p xs)) (filter' p xs)) <= suc (length xs) \with {
-        | true => filter-lem p xs
-        | false => <=-helper (filter-lem p xs)
-    }
+  | nil => unit
+  | cons x xs => \case p x \as b \return length (if (b) (cons x (filter' p xs)) (filter' p xs)) <= suc (length xs) \with {
+    | true => filter-lem p xs
+    | false => <=-helper (filter-lem p xs)
+  }
 
 -- 3. Докажите, что если равенство элементов A разрешимо, то и равенство элементов List A тоже разрешимо.
 
@@ -54,41 +53,41 @@
   | nil => nil
   | cons x xs => xs
 
-\func cons/=nil {A : \Type} {x : A} {xs : List A} (p : cons x xs = nil) : Empty => transport (\lam n => \case n \with { | nil => Empty | cons _ _ => Unit }) p unit
+\func cons/=nil {A : \Type} {x : A} {xs : List A} (p : cons x xs = nil) : Empty =>
+  transport (\lam n => \case n \with { | nil => Empty | cons _ _ => Unit }) p unit
 
 \func pmap2 {A B C : \Type} (f : A -> B -> C) {a a' : A} (p : a = a') {b b' : B} (q : b = b') : f a b = f a' b' =>
-    path (\lam i => f (p @ i) (q @ i))
+  path (\lam i => f (p @ i) (q @ i))
 
 \instance ListEq {A : \Type} (dec : Eq A) : Eq (List A)
   | decideEq => decideEq dec
-    \where
-        \func decideEq {A : \Type} (dec : Eq A) (xs ys : List A) : Decide (xs = ys) \elim xs, ys
-            | nil, nil => yes idp
-            | nil, cons y ys => no (\lam p => cons/=nil (sym p))
-            | cons x xs, nil => no cons/=nil
-            | cons x xs, cons y ys => \case decideEq dec xs ys, dec.decideEq x y \with {
-                | yes ps, yes p => yes (pmap2 (\lam z zs => cons z zs) p ps)
-                | yes ps, no c => no (\lam p => c (pmap (headOrDefault x) p))
-                | no c, _ => no (\lam p => c (pmap tail p))
-            }
+  \where
+    \func decideEq {A : \Type} (dec : Eq A) (xs ys : List A) : Decide (xs = ys) \elim xs, ys
+      | nil, nil => yes idp
+      | nil, cons y ys => no (\lam p => cons/=nil (sym p))
+      | cons x xs, nil => no cons/=nil
+      | cons x xs, cons y ys => \case decideEq dec xs ys, dec.decideEq x y \with {
+        | yes ps, yes p => yes (pmap2 (\lam z zs => cons z zs) p ps)
+        | yes ps, no c => no (\lam p => c (pmap (headOrDefault x) p))
+        | no c, _ => no (\lam p => c (pmap tail p))
+      }
 
 -- 4. Докажите, что предикат isEven разрешим.
 
 \func isEven (n : Nat) => \Sigma (k : Nat) (n = 2 * k)
 
 \func even/=odd {k k' : Nat} (p : 2 * k = 2 * k' + 1) : Empty \elim k, k'
-    | 0 , 0 => suc/=0 (sym p)
-    | suc x, 0 => suc/=0 (pmap pred p)
-    | 0, suc y => suc/=0 (sym (pmap pred p))
-    | suc x, suc y => even/=odd (pmap pred (pmap pred p))
+  | 0 , 0 => suc/=0 (sym p)
+  | suc x, 0 => suc/=0 (pmap pred p)
+  | 0, suc y => suc/=0 (sym (pmap pred p))
+  | suc x, suc y => even/=odd (pmap pred (pmap pred p))
 
-\func \infixr 5 *> {A : \Type} {a a' a'' : A} (p : a = a') (q : a' = a'') : a = a''
-  => transport (\lam x => a = x) q p
+\func \infixr 5 *> {A : \Type} {a a' a'' : A} (p : a = a') (q : a' = a'') : a = a'' => transport (\lam x => a = x) q p
 
 \func isEven-dec : DecPred isEven => \lam n =>
     \case parity n \with {
-        | even k p => yes (k, p)
-        | odd k p => no (\lam x => even/=odd ((sym x.2) *> p))
+      | even k p => yes (k, p)
+      | odd k p => no (\lam x => even/=odd ((sym x.2) *> p))
     }
 
 -- 5. Докажите, что если равенство элементов A разрешимо, то любой список элементов A либо пуст, либо состоит из повторений одного элемента, либо в A существует два различных элемента.
@@ -116,18 +115,72 @@
 -- 6. Определите view, представляющий число в виде частного и остатка от деления его на произвольное (неотрицательное) число m.
 --    Реализуйте функцию деления.
 
-\data T (b : Bool) \with
-  | true => tt
-
 \data ModView (m n : Nat)
   | quot-rem (q r : Nat) (t : T (r < m)) (p : n = q * m + r)
 
-\func mod-view (m n : Nat) (t : T (0 < m)) : ModView m n => {?}
+\func x*0=0 (m : Nat) : 0 * m = 0 \elim m
+  | 0 => idp
+  | suc m => x*0=0 m
 
-\func div (n m : Nat) (t : T (0 < m)) : Nat => {?}
+\func x*1=1 (m : Nat) : 1 * m = m \elim m
+  | 0 => idp
+  | suc m => pmap suc (x*1=1 m)
+
+\func +-assoc (n m k : Nat) : (n + m) + k = n + (m + k) \elim k
+  | 0 => idp
+  | suc k => pmap suc (+-assoc n m k)
+
+\func +-comm (n m : Nat) : n + m = m + n
+  | 0, 0 => idp
+  | 0, suc m => pmap suc (+-comm 0 m)
+  | suc n, 0 => pmap suc (+-comm n 0)
+  | suc n, suc m => pmap suc (+-comm (suc n) m *> pmap suc (sym (+-comm n m)) *> +-comm n (suc m))
+
+\func lemma1 (q m r : Nat) (p : r = m) : q * m + r = suc q * m \elim r
+  | 0 => pmap (\lam x => q * x) (sym p) *> sym (pmap (\lam x => suc q * x) (sym p))
+  | suc r => sym (lemma2 m q 1 *> pmap (\lam x => q * m + x) (x*1=1 m *> sym p))
+
+\func lemma2 (n m k : Nat) : (m + k) * n = m * n + k * n \elim n
+  | 0 => idp
+  | suc n => pmap (\lam x => x + (m + k)) (lemma2 n m k) *> lemma2_1 m n k *> lemma2_2 m n k *> lemma2_3 m n k
+
+\func lemma2_1 (m n k : Nat) =>
+  +-assoc (m * n) (k * n) (m + k) *> pmap (\lam x => (m * n) + x) (sym (+-assoc (k * n) m k))
+
+\func lemma2_2 (m n k : Nat) =>
+  pmap (\lam x => m * n + (x + k)) (+-comm (k * n) m) *> pmap (\lam x => (m * n) + x) (+-assoc m (k * n) k)
+
+\func lemma2_3 (m n k : Nat) => sym (+-assoc (m * n) m (k * n + k))
+
+\func lemma3 (r m : Nat) (t : T (r < m)) (p : suc r = m -> Empty) : T (suc r < m) \elim r, m
+  | 0, suc m => helper m t p
+  | suc r, suc m => lemma3 r m t (\lam p' => p (pmap suc p'))
+  | 0, 0 => t
+  | suc r, 0 => t
+  \where \func helper (m : Nat) (t : T (0 < suc m)) (p : 1 = suc m -> Empty) : T (1 < suc m)
+    | 0, _, p => absurd (p idp)
+    | suc m, t, _ => t
+
+\func mod-view (m n : Nat) (t : T (0 < m)) : ModView m n \elim m, n
+  | 0, 0 => quot-rem 0 0 t idp
+  | m, 0 => quot-rem 0 0 t (sym (x*0=0 m))
+  | m, suc n => \case mod-view m n t \with {
+    | quot-rem q r t' p => \let r' => suc r \in \case NatEq.decideEq r' m \with {
+      | yes p' => quot-rem (suc q) 0 t (
+        pmap suc p *> lemma1 q m r' p')
+      | no p' => quot-rem q (suc r) (lemma3 r m t' p') (pmap suc p)
+    }
+  }
+
+\func div (n m : Nat) (t : T (0 < m)) : Nat => \case mod-view m n t \with { | quot-rem q _ _ _ => q }
 
 -- 7. Докажите, что функции FromBoolToDec и FromDecToBool взаимно обратны.
 
 \func bdb {A : \Type} (p : A -> Bool) : FromDecToBool (FromBoolToDec p) = p => {?}
 
-\func dbd {A : \Type} (P : \Sigma (P : A -> \Type) (DecPred P)) : FromBoolToDec (FromDecToBool P) = P => {?}
+-- Мы не можем доказать, что FromBoolToDec (FromDecToBool P) = P, но мы можем доказать более слабое утверждение: эти предикаты логически эквивалентны.
+-- Для этого введем эквивалентность предикатов.
+
+\func \infix 4 <-> {A : \Type} (P Q : A -> \Type) => \Pi (x : A) -> \Sigma (P x -> Q x) (Q x -> P x)
+
+\func dbd {A : \Type} (P : \Sigma (P : A -> \Type) (DecPred P)) : (FromBoolToDec (FromDecToBool P)).1 <-> P.1 => {?}

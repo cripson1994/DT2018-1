@@ -16,7 +16,7 @@
 
 \func div (n k : Nat) : Nat => {?}
 
-\func toDivDom {n k : Nat} (t : T (0 < k)) : divDom
+\func toDivDom {n k : Nat} (t : T (0 < k)) : divDom => {?}
 
 -- 4. Определите элиминатор для D.
 

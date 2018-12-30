@@ -1,0 +1,28 @@
+\import lect10
+
+-- 1. Определите функцию sscanf.
+
+-- 2. Определите тип бинарных сортированных деревьев.
+--    То есть таких деревьев, в которых для любого узла верно, что все элементы в левом поддереве меньше либо равны, чем значение в узле, которое меньше либо равно, чем все элементы в правом поддереве.
+
+\data Tree (A : Poset) : \Type
+  | leaf
+  | branch (x : A) (left right : Tree A) (LessNode left x) (GreatNode x right)
+
+\data LessNode {A : Poset} (tree : Tree A) (x : A) : \Type \elim tree
+  | leaf => leafL
+  | branch v l r ln rn => left-branch (v <= x)
+
+\data GreatNode {A : Poset} (x : A) (tree : Tree A) : \Type \elim tree
+  | leaf => leafR
+  | branch v l r ln rn => right-branch (x <= v)
+
+-- 3. Реализуйте функцию сортировки, возвращающую SortedList.
+
+\func sort {A : TotalPoset} (xs : List A) : SortedList A => {?}
+
+-- 4. Реализуйте функцию filter и докажите ее корректность, то есть, что выполнены следующие условияЖ
+--    * filter p xs является подсписком xs
+--    * Все элементы filter p xs удовлетворяют предикату p
+--    * Любой подсписок xs с тем же свойством является подсписком filter p xs
+--

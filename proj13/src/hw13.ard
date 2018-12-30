@@ -10,20 +10,20 @@
 -- 2. Определите функции сложения и умножения для Int.
 
 \func \infixl 6 + (x y : Int) : Int \elim x, y
-    | pos 0, pos (suc y) => pos (suc y)
-    | pos x, pos 0 => pos x
-    | pos (suc x), neg (suc y) => pos x + neg y
-    | pos (suc x), pos (suc y) => pos ((suc x) Nat.+ (suc y))
-    | pos 0, neg (suc y) => neg (suc y)
-    | neg (suc x), pos (suc y) => neg x + pos y
-    | neg (suc x), neg (suc y) => neg (suc (suc (x Nat.+ y)))
-    | neg (suc x), pos 0 => neg (suc x)
+  | pos 0, pos (suc y) => pos (suc y)
+  | pos x, pos 0 => pos x
+  | pos (suc x), neg (suc y) => pos x + neg y
+  | pos (suc x), pos (suc y) => pos ((suc x) Nat.+ (suc y))
+  | pos 0, neg (suc y) => neg (suc y)
+  | neg (suc x), pos (suc y) => neg x + pos y
+  | neg (suc x), neg (suc y) => neg (suc (suc (x Nat.+ y)))
+  | neg (suc x), pos 0 => neg (suc x)
 
 \func \infixl 7 * (x y : Int) : Int \elim x, y
-    | pos x, pos y => pos (x Nat.* y)
-    | pos x, neg y => neg (x Nat.* y)
-    | neg (suc x), pos y => neg (suc x Nat.* y)
-    | neg (suc x), neg y => pos (suc x Nat.* y)
+  | pos x, pos y => pos (x Nat.* y)
+  | pos x, neg y => neg (x Nat.* y)
+  | neg (suc x), pos y => neg (suc x Nat.* y)
+  | neg (suc x), neg y => pos (suc x Nat.* y)
 
 -- 3. Определите тип данных BinNat для бинарных натуральных чисел.
 --    У него должно быть три конструктора: для 0, для чисел вида 2*n и чисел вида 2*n+1.
@@ -59,10 +59,11 @@
 
 \data Unit | unit
 
-\func suc/=0 {n : Nat} (p : suc n = 0) : Empty =>  transport (\lam n => \case n \with { | 0 => Empty | suc _ => Unit }) p unit
+\func suc/=0 {n : Nat} (p : suc n = 0) : Empty =>
+  transport (\lam n => \case n \with { | 0 => Empty | suc _ => Unit }) p unit
 
 \func suc-is-not-sur (p : isSur suc) : Empty => \case p 0 \with {
-    | in x => suc/=0 x.2
+  | in x => suc/=0 x.2
 }
 
 -- 7. Пусть f : A -> B и g : B -> C ─ некоторые функции.
@@ -74,16 +75,16 @@
 \func trans {A : \Type} {a a' a'' : A} (p : a = a') (q : a' = a'') : a = a'' => transport (\lam x => a = x) q p
 
 \func o-sur {A B C : \Type} (f : A -> B) (g : B -> C) (p : isSur f) (q : isSur g) : isSur (g `o` f) =>
-     \lam x => \case q x \with {
-        | in y => \case p (y.1) \with {
-            | in z => in (z.1, trans (pmap g z.2) y.2)
-        }
-     }
+  \lam x => \case q x \with {
+    | in y => \case p (y.1) \with {
+      | in z => in (z.1, trans (pmap g z.2) y.2)
+    }
+  }
 
 \func o-sur' {A B C : \Type} (f : A -> B) (g : B -> C) (p : isSur (g `o` f)) : isSur g =>
-    \lam x => \case p x \with {
-        | in y => in (f y.1, y.2)
-    }
+  \lam x => \case p x \with {
+    | in y => in (f y.1, y.2)
+  }
 
 -- 8. Определите множество конечных подмножеств множества A, то есть списков элементов A с точностью до перестановок и повторений элементов.
 

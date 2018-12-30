@@ -1,6 +1,5 @@
 \import lect03
 
-
 -- 1. Докажите ассоциативность ++.
 
 \func \infixr 5 ++ {A : \Type} (xs ys : List A) : List A \elim xs
@@ -16,7 +15,6 @@
 
 \data T (b : Bool) \with
   | true => Unit
---  | false => Empty
 
 -- 3. Напишите функцию lookup, которая принимает список и натуральное число и возвращает элемент по заданому индексу.
 --    В общем случае эту функцию определить невозможно, т.к. индекс может быть больше, чем число элементов в списке.
@@ -77,6 +75,7 @@
 -- 7. Реализуйте Fin как рекурсивную функцию.
 
 \data Empty
+
 \data Fnat (A : \Type)
   | Zero
   | Succ A
@@ -100,18 +99,18 @@
 -- диагональная матрица с элементами e на диагонали и z на остальных позициях.
 
 \func \infixl 2 - (a b : Nat) : Nat
-     | 0, _ => 0
-     | a, 0 => a
-     | suc a, suc b => a - b
+  | 0, _ => 0
+  | a, 0 => a
+  | suc a, suc b => a - b
 
 \func diag {A : \Type} (z e : A) (n : Nat) : Mat A n n => cycle z e n n
   \where \func cycle {A : \Type } (z e : A) (i n : Nat) : Mat A i n \elim i
     | 0 => fnil
     | suc i => fcons (seti z e (n - (suc i)) n) (cycle z e i n)
-      \where \func seti {A : \Type} (z e : A) (i n : Nat) : Vec A n \elim i, n
-        | _ , 0 => fnil
-        | 0, suc n => fcons e (replicate' z n)
-        | suc i, suc n => fcons z (seti z e i n)
+    \where \func seti {A : \Type} (z e : A) (i n : Nat) : Vec A n \elim i, n
+      | _ , 0 => fnil
+      | 0, suc n => fcons e (replicate' z n)
+      | suc i, suc n => fcons z (seti z e i n)
 
 -- транспонирование матриц
 
@@ -126,7 +125,8 @@
   | 0, fnil, fnil => fnil
   | suc n, fcons x xs, fcons y ys => fcons (f x y)  (zipFunction f xs ys)
 
-\func matAdd {A : \Type} (add : A -> A -> A) (n m : Nat) (M N : Mat A n m) : Mat A n m => zipFunction (zipFunction add) M N
+\func matAdd {A : \Type} (add : A -> A -> A) (n m : Nat) (M N : Mat A n m) : Mat A n m =>
+  zipFunction (zipFunction add) M N
 
 -- умножение матриц
 

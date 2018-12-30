@@ -8,18 +8,18 @@
 \func \fixr 9 o {A B C : \Type} (g : B -> C) (f : A -> B) => \lam a => g (f a)
 
 \func o-inj {A B C : \Type} (f : A -> B) (g : B -> C) (p : isInj f) (q : isInj g) : isInj (g `o` f) =>
-    \lam x y z => p x y (q (f x) (f y) z)
+  \lam x y z => p x y (q (f x) (f y) z)
 
 \func o-inj' {A B C : \Type} (f : A -> B) (g : B -> C) (p : isInj (g `o` f)) : isInj f =>
-    \lam x y z => p x y (pmap g z)
+  \lam x y z => p x y (pmap g z)
 
 -- 2. Определите предикат "делится на 3 или на 5" так, чтобы он возвращал утверждения.
 --    Докажите, что MultipleOf3Or5 вкладывается в ℕ.
 
 \func mod3or5==0 (n : Nat) : Bool => \case mod3 n, mod5 n \with {
-    | 0, _ => true
-    | _, 0 => true
-    | _, _ => false
+  | 0, _ => true
+  | _, 0 => true
+  | _, _ => false
 }
 
 \func isMultipleOf3Or5 (n : Nat) : \Type => T (mod3or5==0 n)
@@ -31,7 +31,7 @@
 \func Mul-inc (m : MultipleOf3Or5) => m.1
 
 \func Mul-inc-isInj : isInj Mul-inc =>
-    \lam t1 t2 p => sigmaEq (\lam n => T (mod3or5==0 n)) t1 t2 p T-lem
+  \lam t1 t2 p => sigmaEq (\lam n => T (mod3or5==0 n)) t1 t2 p T-lem
 
 -- 3. Мы будем говорить, что тип A тривиален, если существует элемент в A, такой что любой другой элемент в A равен ему.
 --    Докажите, что тип A тривиален тогда и только тогда, когда A является утверждением и A населен.
@@ -40,22 +40,20 @@
 
 \func \infix 1 <-> (A B : \Type) => \Sigma (A -> B) (B -> A)
 
-\func trans {A : \Type} {a a' a'' : A} (p : a = a') (q : a' = a'') : a = a''
-    => transport (\lam x => a = x) q p
+\func trans {A : \Type} {a a' a'' : A} (p : a = a') (q : a' = a'') : a = a'' => transport (\lam x => a = x) q p
 
-\func sym {A : \Type} {a a' : A} (p : a = a') : a' = a
-    => transport (\lam x => x = a) p idp
+\func sym {A : \Type} {a a' : A} (p : a = a') : a' = a => transport (\lam x => x = a) p idp
 
 \func isTriv-lem (A : \Type) : isTriv A <-> (\Sigma (isProp A) A) =>
-    (\lam p => (\lam a b => trans (sym (p.2 a)) (p.2 b), p.1), \lam p => (p.2, p.1 p.2) )
+  (\lam p => (\lam a b => trans (sym (p.2 a)) (p.2 b), p.1), \lam p => (p.2, p.1 p.2) )
 
 -- 4. Докажите, что Either не является утверждением в общем случаем.
 
 \func Either-isProp (p : \Pi {A B : \Type} (pA : isProp A) (pB : isProp B) -> isProp (Either A B)) : Empty =>
-    \let t => p Unit-isProp Unit-isProp (inr unit) (inl unit) \in
+  \let t => p Unit-isProp Unit-isProp (inr unit) (inl unit) \in
     T-absurd (transport (\lam a  => T (\case a \with {
-        | inr _ => true
-        | inl _ => false
+      | inr _ => true
+      | inl _ => false
     })) t tt)
 
 -- 5. Докажите, что LessOrEq и LessOrEq' являются предикатами.
@@ -68,7 +66,10 @@
   | suc m => <=-step (LessOrEq' n m)
   | m => <=-refl (n = m)
 
-\func LessOrEq-isProp {n m : Nat} : isProp (LessOrEq n m) => {?}
+\func LessOrEq-isProp {n m : Nat} : isProp (LessOrEq n m) => helper n m
+  \where \func helper (n m : Nat) (x y : LessOrEq n m) : x = y
+    | 0, m, z<=n, z<=n => idp
+    | suc n, suc m, s<=s x, s<=s y => pmap s<=s (helper n m x y)
 
 -- Для решения LessOrEq'-isProp понадобится тот факт, что Nat является множеством.
 -- Ниже приведено доказательство этого факта, которое можно использовать.
@@ -95,4 +96,4 @@
 -- 7. Докажите, что если тип A вкладывается в тип B и B является утверждением, то и A является утверждением.
 
 \func sub-isProp {A B : \Type} (f : A -> B) (p : isInj f) (q : isProp B) : isProp A =>
-    \lam x y => p x y (q (f x) (f y))
+  \lam x y => p x y (q (f x) (f y))

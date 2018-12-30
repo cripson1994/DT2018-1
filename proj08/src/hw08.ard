@@ -6,9 +6,13 @@
 \func id' {A : \Type} (a : A) => a
 
 \func idTest1 : \Pi (A : \Type \lp ) -> A -> A => id' (\suc \lp) (id' (\suc \lp) id)
+
 \func idTest2 : \Type \lp -> \Type \lp => id' (\suc \lp) Maybe
+
 \func idTest3 : \Type (\suc \lp) => id' (\suc (\suc \lp)) Functor
+
 \func idTest4 : \Type (\suc \lp) => id' (\suc (\suc \lp)) (Functor \lp Maybe)
+
 \func idTest5 (f : \Pi {A B : \Type} -> (A -> B) -> Maybe A -> Maybe B) : \Type \lp => id' (\suc \lp) (Functor Maybe f)
 
 -- 2. Определите предикат принадлежности элемента списку.
@@ -16,8 +20,8 @@
 \data List (A : \Type) | nil | cons A (List A)
 
 \data In {A : \Type} (a : A) (xs : List A) \elim xs
-    | cons x xs => in (x = a)
-    | cons x xs => maybe (In a xs)
+  | cons x xs => in (x = a)
+  | cons x xs => maybe (In a xs)
 
 -- 3. Докажите эквивалентность пяти различных определений LessOrEq: lessOrEq, LessOrEq, LessOrEq', LessOrEq'' и LessOrEq'''.
 
@@ -33,43 +37,60 @@
     |  s<=s p => s<=s' idp idp (proof_2->3 p)
   }
 
+\func sym {A : \Type} {a a' : A} (p : a = a') => transport (\lam x => x = a) p idp
+
+\func absurd {A : \Type} (e : Empty) : A
+
+\func proof_3->4 {n m : Nat} (p : LessOrEq' n m) : LessOrEq'' n m \elim n, m, p
+  | 0, 0, p => <=-refl idp
+  | 0, suc m, s<=s' _ _ _ => <=-step (proof_3->4 (z<=n' idp))
+  | 0, suc m, z<=n' p => <=-step (proof_3->4 (z<=n' p))
+  | suc n, 0, s<=s' _ p_m _ => absurd (suc/=0 (sym p_m))
+  | suc n, _, z<=n' p => absurd (suc/=0 p)
+  | suc n, suc m, s<=s' {n'} p_n p_m p => helper (proof_3->4 (
+    transport (\lam x => LessOrEq' x m) (sym (pmap pred p_n)) (transport (LessOrEq' n') (sym (pmap pred p_m)) p)
+  ))
+  \where \func helper {n m : Nat} (p : LessOrEq'' n m) : LessOrEq'' (suc n) (suc m) \elim n, m, p
+    | _, _, <=-refl p => <=-refl (pmap suc p)
+    | 0, suc m, <=-step leq => <=-step (helper leq)
+    | suc n, suc m, <=-step leq => <=-step (helper leq)
+
 \func pmap {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') => path (\lam i => f (p @ i))
 
-\func transport {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a)
-  => coe (\lam i => B (p @ i)) b right
+\func transport {A : \Type} (B : A -> \Type) {a a' : A} (p : a = a') (b : B a) => coe (\lam i => B (p @ i)) b right
 
-\func \infixr 5 *> {A : \Type} {a a' a'' : A} (p : a = a') (q : a' = a'') : a = a''
-  => transport (\lam x => a = x) q p
+\func \infixr 5 *> {A : \Type} {a a' a'' : A} (p : a = a') (q : a' = a'') : a = a'' => transport (\lam x => a = x) q p
 
 \func lemma0+n=n {n : Nat} : 0 Nat.+ n = n \elim n
-    | 0 => idp
-    | suc n => pmap suc lemma0+n=n
+  | 0 => idp
+  | suc n => pmap suc lemma0+n=n
 
-\func lemma_suc-assoc {n m : Nat} :  suc n Nat.+ m = suc (n Nat.+ m) \elim m
-    | 0 => idp
-    | suc m => pmap suc lemma_suc-assoc
+\func lemma_suc-assoc {n m : Nat} : suc n Nat.+ m = suc (n Nat.+ m) \elim m
+  | 0 => idp
+  | suc m => pmap suc lemma_suc-assoc
 
 \func proof_4->5 {n m : Nat} (p : LessOrEq'' n m) : LessOrEq''' n m \elim n, m, p
-    | 0, 0, <=-refl p => (0, helper p)
-    | n, suc m, <=-refl p => (0, helper p)
-    | suc n, m, <=-refl p => (0, helper p)
-    | 0, suc m, <=-step p => (suc m, idp)
-    | suc n, suc m, <=-step p => \case proof_4->5 p \with {
-        | (k, p) => (suc k, pmap suc (lemma_suc-assoc *> p))
-    }
-    \where
-        \func helper {n m : Nat} (p : n = m) : 0 Nat.+ n = m => lemma0+n=n *> p
+  | 0, 0, <=-refl p => (0, helper p)
+  | n, suc m, <=-refl p => (0, helper p)
+  | suc n, m, <=-refl p => (0, helper p)
+  | 0, suc m, <=-step p => (suc m, idp)
+  | suc n, suc m, <=-step p => \case proof_4->5 p \with {
+    | (k, p) => (suc k, pmap suc (lemma_suc-assoc *> p))
+  }
+  \where
+    \func helper {n m : Nat} (p : n = m) : 0 Nat.+ n = m => lemma0+n=n *> p
 
-\func suc/=0 {n : Nat} (p : suc n = 0) : Empty => transport (\lam n => \case n \with { | 0 => Empty | suc _ => Unit }) p unit
+\func suc/=0 {n : Nat} (p : suc n = 0) : Empty =>
+  transport (\lam n => \case n \with { | 0 => Empty | suc _ => Unit }) p unit
 
 \func pred (n : Nat) : Nat
   | 0 => 0
   | suc n => n
 
 \func proof_5->1 {n m : Nat} (p : LessOrEq''' n m) : lessOrEq n m \elim n, m, p
-    | 0, _, _ => unit
-    | suc n, 0, (_, p) => suc/=0 p
-    | suc n, suc m, (k, p) => proof_5->1 (k, pmap pred p)
+  | 0, _, _ => unit
+  | suc n, 0, (_, p) => suc/=0 p
+  | suc n, suc m, (k, p) => proof_5->1 (k, pmap pred p)
 
 
 -- 4. Определите рефлексивное транзитивное замыкание отношения.
@@ -86,16 +107,17 @@
 
 \func \infix 4 <-> {A : \Type} (P Q : A -> A -> \Type) => \Pi (x y : A) -> \Sigma (P x y -> Q x y) (Q x y -> P x y)
 
-\func ReflTransClosure-lem {A : \Type} (R : A -> A -> \Type) (refl : \Pi (x : A) -> R x x) (trans : \Pi (x y z : A) -> R x y -> R y z -> R x z) : R <-> ReflTransClosure R => {?}
+\func ReflTransClosure-lem {A : \Type} (R : A -> A -> \Type) (refl : \Pi (x : A) -> R x x) (trans : \Pi (x y z : A) -> R x y -> R y z -> R x z) : R <-> ReflTransClosure R =>
+  {?}
 
 -- 6. Определите предикат xs <= ys на списках, означающий "список xs является подсписком ys".
 
 \data \infix 5 <= {A : \Type} (xs ys : List A) : \Type \elim xs, ys
-    | nil, _ => head-nil
-    | cons x xs, cons y ys => {
-        | head-in (x = y) (xs <= ys)
-        | head-out ((cons x xs) <= ys)
-    }
+  | nil, _ => head-nil
+  | cons x xs, cons y ys => {
+  | head-in (x = y) (xs <= ys)
+  | head-out ((cons x xs) <= ys)
+  }
 
 -- 7. Докажите, что filter xs <= xs для любого списка xs.
 
@@ -109,18 +131,18 @@
   }
 
 \func lemma {A : \Type} (x : A) (ys xs : List A) (p : ys <= xs) : ys <= cons x xs \elim ys, xs
-    | nil, _ => head-nil
-    | cons y ys, cons a as => head-out p
+  | nil, _ => head-nil
+  | cons y ys, cons a as => head-out p
 
 \func filter_xs<=xs {A : \Type} (p : A -> Bool) (xs : List A) : (filter p xs) <= xs \elim xs
-    | nil => head-nil
-    | cons x xs => helper p x xs
-    \where \func helper {A : \Type} (p : A -> Bool) (x : A) (xs : List A) : filter p (cons x xs) <= (cons x xs) =>
-        \let | ys => filter p xs | xsp => filter_xs<=xs p xs \in
-            \case p x \as b \return ( \case b \with {
-                | true => cons x (filter p xs)
-                | false => filter p xs
-                }) <= (cons x xs) \with {
-                    | true => head-in idp (filter_xs<=xs p xs)
-                    | false => lemma x (filter p xs) xs (filter_xs<=xs p xs)
-                }
+  | nil => head-nil
+  | cons x xs => helper p x xs
+  \where \func helper {A : \Type} (p : A -> Bool) (x : A) (xs : List A) : filter p (cons x xs) <= (cons x xs) =>
+    \let | ys => filter p xs | xsp => filter_xs<=xs p xs \in
+      \case p x \as b \return ( \case b \with {
+        | true => cons x (filter p xs)
+        | false => filter p xs
+      }) <= (cons x xs) \with {
+        | true => head-in idp (filter_xs<=xs p xs)
+        | false => lemma x (filter p xs) xs (filter_xs<=xs p xs)
+      }

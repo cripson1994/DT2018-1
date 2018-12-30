@@ -17,14 +17,14 @@
 \func \infix 1 <-> (A B : \Type) => \Sigma (A -> B) (B -> A)
 
 \func deMorgan (A B C : \Prop) : (\Sigma A (B `Or` C)) <-> ((\Sigma A B) `Or` (\Sigma A C)) => (
-    \lam p => \case p \with {
-        | (a, inl b) => inl (a, b)
-        | (a, inr c) => inr (a, c)
-    },
-    \lam p => \case p \with {
-        | inl (a, b) => (a, inl b)
-        | inr (a, c) => (a, inr c)
-    }
+  \lam p => \case p \with {
+    | (a, inl b) => inl (a, b)
+    | (a, inr c) => inr (a, c)
+  },
+  \lam p => \case p \with {
+    | inl (a, b) => (a, inl b)
+    | inr (a, c) => (a, inr c)
+  }
 )
 
 -- 3. Определите элиминатор для Or через Or-rec, не используя паттерн матчинг на Or.
@@ -56,4 +56,5 @@
 -- 5. Докажите, что n-типы замкнуты относительно образования \Pi-типов.
 --    Hint: Доказательство по индукции. Для случая suc n нужно доказать, что если f,g : \Pi (x : A) -> B x верно f = g эквивалентно \Pi (x : A) -> f x = g x.
 
-\func levelPi {A : \Type} (B : A -> \Type) (n : Nat) (p : \Pi (x : A) -> B x `hasLevel` n) : (\Pi (x : A) -> B x) `hasLevel` n => {?}
+\func levelPi {A : \Type} (B : A -> \Type) (n : Nat) (p : \Pi (x : A) -> B x `hasLevel` n) : (\Pi (x : A) -> B x) `hasLevel` n =>
+  {?}
