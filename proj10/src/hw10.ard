@@ -6,16 +6,24 @@
 --    То есть таких деревьев, в которых для любого узла верно, что все элементы в левом поддереве меньше либо равны, чем значение в узле, которое меньше либо равно, чем все элементы в правом поддереве.
 
 \data Tree (A : Poset) : \Type
-  | leaf
+  | leaf (x : A)
   | branch (x : A) (left right : Tree A) (LessNode left x) (GreatNode x right)
 
 \data LessNode {A : Poset} (tree : Tree A) (x : A) : \Type \elim tree
-  | leaf => leafL
-  | branch v l r ln rn => left-branch (v <= x)
+  | leaf a => leafL (a <= x)
+  | branch v l r ln rn => left-branch (max r <= x)
 
 \data GreatNode {A : Poset} (x : A) (tree : Tree A) : \Type \elim tree
-  | leaf => leafR
-  | branch v l r ln rn => right-branch (x <= v)
+  | leaf a => leafR (x <= a)
+  | branch v l r ln rn => right-branch (x <= min l)
+
+\func max {A : Poset} (tree : Tree A) : A
+  | leaf a => a
+  | branch v l r ln rn => max r
+
+\func min {A : Poset} (tree : Tree A) : A
+  | leaf a => a
+  | branch v l r ln rn => min l
 
 -- 3. Реализуйте функцию сортировки, возвращающую SortedList.
 
